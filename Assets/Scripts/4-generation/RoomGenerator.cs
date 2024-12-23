@@ -6,12 +6,16 @@ public class RoomGenerator {
     private int mapHeight;
     private int minRoomSize;
     private Random random;
+    
+    private int corridorSize = 1;
 
+    private float probability = 0.5f;
     public int[,] Map { get; private set; }
 
-    public RoomGenerator(int width, int height, int minRoomSize = 6) {
+    public RoomGenerator(int width, int height, int minRoomSize = 6 , float probabilitySplit = 0.5f) {
         mapWidth = width;
         mapHeight = height;
+        probability = probabilitySplit;
         this.minRoomSize = minRoomSize;
         Map = new int[width, height];
         random = new Random();
@@ -42,7 +46,7 @@ public class RoomGenerator {
     }
 
     private void SplitNode(BSPNode node) {
-        if (!node.Split(minRoomSize)) return;
+        if (!node.Split(minRoomSize , probability)) return;
 
         SplitNode(node.Left);
         SplitNode(node.Right);
@@ -73,12 +77,12 @@ public class RoomGenerator {
     private void CreateCorridor(int x1, int y1, int x2, int y2) {
         while (x1 != x2) {
             Map[x1, y1] = 0; // Mark as floor
-            x1 += x1 < x2 ? 1 : -1;
+            x1 += x1 < x2 ? corridorSize : -corridorSize;
         }
 
         while (y1 != y2) {
             Map[x1, y1] = 0; // Mark as floor
-            y1 += y1 < y2 ? 1 : -1;
+            y1 += y1 < y2 ? corridorSize : -corridorSize;
         }
     }
 }
@@ -107,10 +111,10 @@ public class BSPNode {
         random = new Random();
     }
 
-    public bool Split(int minSize) {
+    public bool Split(int minSize , float probability) {
         if (Width < minSize * 2 && Height < minSize * 2) return false;
 
-        bool splitHorizontally = random.NextDouble() > 0.5;
+        bool splitHorizontally = random.NextDouble() > probability;
         if (Width > Height && Width / Height >= 1.25) splitHorizontally = false;
         else if (Height > Width && Height / Width >= 1.25) splitHorizontally = true;
 

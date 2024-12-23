@@ -11,16 +11,17 @@ public class TileMapRoomGenerator : MonoBehaviour {
     [SerializeField] TileBase floorTile = null;
 
     [Tooltip("Map width and height")]
-    [SerializeField] int mapWidth = 50;
-    [SerializeField] int mapHeight = 50;
+    [SerializeField] int roomWidth = 50;
+    [SerializeField] int roomHeight = 50;
 
     [Tooltip("Minimum room size")]
     [SerializeField] int minRoomSize = 6;
 
+    [SerializeField] private float probabilitySplit = 0.5f;
     private RoomGenerator roomGenerator;
 
     void Start() {
-        roomGenerator = new RoomGenerator(mapWidth, mapHeight, minRoomSize);
+        roomGenerator = new RoomGenerator(roomWidth, roomHeight, minRoomSize , probabilitySplit);
         roomGenerator.GenerateMap();
         DisplayMap(roomGenerator.Map);
     }
