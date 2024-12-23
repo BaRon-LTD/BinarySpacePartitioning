@@ -7,15 +7,20 @@ public class RoomGenerator {
     private int minRoomSize;
     private Random random;
     
-    private int corridorSize = 1;
+    private int corridorMargin = 1;
 
     private float probability = 0.5f;
+
+    private float threshold = 1.25f;
+    private int roomThick = 2;
     public int[,] Map { get; private set; }
 
-    public RoomGenerator(int width, int height, int minRoomSize = 6 , float probabilitySplit = 0.5f) {
+    public RoomGenerator(int width, int height, int minRoomSize = 6 , float probabilitySplit = 0.5f , float thresholdSplit = 1.25f,int wallThick = 2) {
         mapWidth = width;
         mapHeight = height;
         probability = probabilitySplit;
+        roomThick = wallThick;
+        threshold = thresholdSplit;
         this.minRoomSize = minRoomSize;
         Map = new int[width, height];
         random = new Random();
@@ -36,7 +41,7 @@ public class RoomGenerator {
         SplitNode(rootNode);
 
         // Fill the rooms in the map
-        List<BSPNode> rooms = rootNode.GetRooms();
+        List<BSPNode> rooms = rootNode.GetRooms(roomThick);
         foreach (var room in rooms) {
             FillRoom(room);
         }
@@ -46,7 +51,7 @@ public class RoomGenerator {
     }
 
     private void SplitNode(BSPNode node) {
-        if (!node.Split(minRoomSize , probability)) return;
+        if (!node.Split(minRoomSize , probability,threshold)) return;
 
         SplitNode(node.Left);
         SplitNode(node.Right);
@@ -77,12 +82,12 @@ public class RoomGenerator {
     private void CreateCorridor(int x1, int y1, int x2, int y2) {
         while (x1 != x2) {
             Map[x1, y1] = 0; // Mark as floor
-            x1 += x1 < x2 ? corridorSize : -corridorSize;
+            x1 += x1 < x2 ? corridorMargin : -corridorMargin;
         }
 
         while (y1 != y2) {
             Map[x1, y1] = 0; // Mark as floor
-            y1 += y1 < y2 ? corridorSize : -corridorSize;
+            y1 += y1 < y2 ? corridorMargin : -corridorMargin;
         }
     }
 }
@@ -111,12 +116,12 @@ public class BSPNode {
         random = new Random();
     }
 
-    public bool Split(int minSize , float probability) {
+    public bool Split(int minSize , float probability , float threshold) {
         if (Width < minSize * 2 && Height < minSize * 2) return false;
 
         bool splitHorizontally = random.NextDouble() > probability;
-        if (Width > Height && Width / Height >= 1.25) splitHorizontally = false;
-        else if (Height > Width && Height / Width >= 1.25) splitHorizontally = true;
+        if (Width > Height && Width / Height >= threshold) splitHorizontally = false;
+        else if (Height > Width && Height / Width >= threshold) splitHorizontally = true;
 
         int max = (splitHorizontally ? Height : Width) - minSize;
         if (max <= minSize) return false;
@@ -134,18 +139,18 @@ public class BSPNode {
         return true;
     }
 
-    public List<BSPNode> GetRooms() {
+    public List<BSPNode> GetRooms(int roomThick) {
         if (Left == null && Right == null) {
             RoomX = X + 1;
             RoomY = Y + 1;
-            RoomWidth = Width - 2;
-            RoomHeight = Height - 2;
+            RoomWidth = Width - roomThick;
+            RoomHeight = Height - roomThick;
             return new List<BSPNode> { this };
         }
 
         List<BSPNode> rooms = new List<BSPNode>();
-        if (Left != null) rooms.AddRange(Left.GetRooms());
-        if (Right != null) rooms.AddRange(Right.GetRooms());
+        if (Left != null) rooms.AddRange(Left.GetRooms(roomThick));
+        if (Right != null) rooms.AddRange(Right.GetRooms(roomThick));
         return rooms;
     }
 }
